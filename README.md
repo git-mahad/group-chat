@@ -23,12 +23,6 @@ A secure, real-time group chat application built with NestJS, featuring WebSocke
 - **Online Users**: See who's currently online in a group
 - **Message History**: Retrieve chat history via REST API
 
-### API Features
-- **Comprehensive Documentation**: Full Swagger/OpenAPI documentation
-- **Error Handling**: Consistent error responses across all endpoints
-- **Validation**: Input validation with class-validator
-- **Type Safety**: Full TypeScript support
-
 ## Technology Stack
 
 - **Backend**: NestJS (Node.js framework)
@@ -193,32 +187,6 @@ src/
 └── config/              # Configuration files
 ```
 
-## 🧪 Testing
-
-```bash
-# Unit tests
-npm run test
-
-# E2E tests
-npm run test:e2e
-
-# Test coverage
-npm run test:cov
-```
-
-## 🔧 Development
-
-```bash
-# Format code
-npm run format
-
-# Lint code
-npm run lint
-
-# Build for production
-npm run build
-```
-
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -238,22 +206,3 @@ npm run build
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions, please open an issue in the repository or contact the development team.
-
-## 🔄 Changelog
-
-### Version 1.0.0
-- Initial release with secure group chat functionality
-- Admin-only group management
-- Member-only access controls
-- Real-time WebSocket messaging
-- Comprehensive API documentation
-- JWT authentication
-- Role-based permissions
