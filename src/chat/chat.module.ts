@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
+import { ChatController } from './chat.controller';
 import { Message } from './entity/message.entity';
 import { GroupsModule } from 'src/group/group.module';
 import { AuthModule } from '../auth/auth.module';
@@ -23,6 +24,7 @@ import { JwtModule } from '@nestjs/jwt';
       inject: [ConfigService],
     }),
   ],
+  controllers: [ChatController],
   providers: [ChatGateway, ChatService],
   exports: [ChatService],
 })

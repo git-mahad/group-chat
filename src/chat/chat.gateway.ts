@@ -13,6 +13,7 @@ import { UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { AuthService } from '../auth/auth.service';
+import { GroupsService } from '../group/group.service';
 import { MessageDto } from './dto/message.dto';
 import { JwtService } from '@nestjs/jwt';
 
@@ -38,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
+    private groupsService: GroupsService,
     private jwtService: JwtService,
   ) {}
 
@@ -81,7 +83,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('joinGroup')
-  @ApiOperation({ summary: 'Join a group chat room' })
+  @ApiOperation({ summary: 'Join a group chat room (Group member only)' })
   async handleJoinGroup(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { groupId: number },
@@ -92,6 +94,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.isUserMemberOfGroup(data.groupId, client.userId);
+      if (!isMember && client.user.role !== 'admin') {
+        client.emit('error', { message: 'You can only join groups you are a member of' });
+        return;
+      }
+
       const groupRoom = `group_${data.groupId}`;
       await client.join(groupRoom);
       
@@ -133,7 +142,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('sendMessage')
-  @ApiOperation({ summary: 'Send a message to a group' })
+  @ApiOperation({ summary: 'Send a message to a group (Group member only)' })
   async handleMessage(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody(ValidationPipe) messageDto: MessageDto,
@@ -144,6 +153,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   
     try {
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.isUserMemberOfGroup(messageDto.groupId, client.userId);
+      if (!isMember && client.user.role !== 'admin') {
+        client.emit('error', { message: 'You can only send messages to groups you are a member of' });
+        return;
+      }
+
       const message = await this.chatService.createMessage(
         messageDto.content,
         client.userId,
@@ -176,37 +192,58 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('typing')
-  @ApiOperation({ summary: 'Send typing indicator to group members' })
+  @ApiOperation({ summary: 'Send typing indicator to group members (Group member only)' })
   async handleTyping(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { groupId: number, isTyping: boolean },
   ) {
     if (!client.userId) return;
 
-    const groupRoom = `group_${data.groupId}`;
-    client.to(groupRoom).emit('userTyping', {
-      user: client.user,
-      groupId: data.groupId,
-      isTyping: data.isTyping,
-    });
+    try {
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.isUserMemberOfGroup(data.groupId, client.userId);
+      if (!isMember && client.user.role !== 'admin') {
+        return; // Silently ignore typing events from non-members
+      }
+
+      const groupRoom = `group_${data.groupId}`;
+      client.to(groupRoom).emit('userTyping', {
+        user: client.user,
+        groupId: data.groupId,
+        isTyping: data.isTyping,
+      });
+    } catch (error) {
+      // Silently handle errors for typing events
+    }
   }
 
   @SubscribeMessage('getOnlineUsers')
-  @ApiOperation({ summary: 'Get list of online users in a group' })
+  @ApiOperation({ summary: 'Get list of online users in a group (Group member only)' })
   async handleGetOnlineUsers(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { groupId: number },
   ) {
     if (!client.userId) return;
 
-    const groupRoom = `group_${data.groupId}`;
-    const socketsInRoom = await this.server.in(groupRoom).fetchSockets();
-    
-    const onlineUsers = socketsInRoom.map((socket: any) => ({
-      id: socket.userId,
-      name: socket.user?.name,
-    })).filter(user => user.id);
+    try {
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.isUserMemberOfGroup(data.groupId, client.userId);
+      if (!isMember && client.user.role !== 'admin') {
+        client.emit('error', { message: 'You can only view online users of groups you are a member of' });
+        return;
+      }
 
-    client.emit('onlineUsers', { groupId: data.groupId, users: onlineUsers });
+      const groupRoom = `group_${data.groupId}`;
+      const socketsInRoom = await this.server.in(groupRoom).fetchSockets();
+      
+      const onlineUsers = socketsInRoom.map((socket: any) => ({
+        id: socket.userId,
+        name: socket.user?.name,
+      })).filter(user => user.id);
+
+      client.emit('onlineUsers', { groupId: data.groupId, users: onlineUsers });
+    } catch (error) {
+      client.emit('error', { message: 'Failed to get online users' });
+    }
   }
 }

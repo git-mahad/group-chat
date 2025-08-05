@@ -1,98 +1,259 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Secure Group Chat System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A secure, real-time group chat application built with NestJS, featuring WebSocket support for live messaging and comprehensive REST API endpoints. This system implements strict security measures with admin-only group management and proper member visibility controls.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+### Security & Access Control
+- **Admin-Only Group Management**: Only admin users can create, view all groups, and delete groups
+- **Member-Only Access**: Regular users can only view groups they are members of
+- **JWT Authentication**: Secure token-based authentication for all operations
+- **Role-Based Permissions**: Admin and User roles with different access levels
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Group Management
+- **Group Creation**: Admin users can create new chat groups
+- **Group Deletion**: Admin users can delete any group
+- **Member Management**: Users can join and leave groups
+- **Member Visibility**: Group members can see all other members in their groups
 
-## Project setup
+### Real-Time Chat
+- **WebSocket Support**: Real-time messaging with Socket.IO
+- **Group Chat**: Send messages to specific groups
+- **Typing Indicators**: Real-time typing notifications
+- **Online Users**: See who's currently online in a group
+- **Message History**: Retrieve chat history via REST API
 
-```bash
-$ npm install
+### API Features
+- **Comprehensive Documentation**: Full Swagger/OpenAPI documentation
+- **Error Handling**: Consistent error responses across all endpoints
+- **Validation**: Input validation with class-validator
+- **Type Safety**: Full TypeScript support
+
+## Technology Stack
+
+- **Backend**: NestJS (Node.js framework)
+- **Database**: MySQL with TypeORM
+- **Real-time**: Socket.IO for WebSocket connections
+- **Authentication**: JWT (JSON Web Tokens)
+- **Documentation**: Swagger/OpenAPI
+- **Validation**: class-validator
+- **Security**: bcryptjs for password hashing
+
+## Prerequisites
+
+- Node.js (v16 or higher)
+- MySQL database
+- npm or yarn package manager
+
+## Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd group-chat
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the root directory:
+   ```env
+   PORT=3000
+   DATABASE_HOST=localhost
+   DATABASE_PORT=3306
+   DATABASE_USERNAME=root
+   DATABASE_PASSWORD=your_password
+   DATABASE_NAME=group_chat
+   JWT_SECRET=your-super-secret-jwt-key
+   ```
+
+4. **Database Setup**
+   - Create a MySQL database named `group_chat`
+   - The application will automatically create tables on startup
+
+5. **Run the application**
+   ```bash
+   # Development mode
+   npm run start:dev
+   
+   # Production mode
+   npm run start:prod
+   ```
+
+## API Documentation
+
+Once the application is running, you can access the interactive API documentation at:
+```
+http://localhost:3000/api/docs
 ```
 
-## Compile and run the project
+## Authentication
 
-```bash
-# development
-$ npm run start
+The system uses JWT (JSON Web Tokens) for authentication. Most endpoints require a valid JWT token in the Authorization header:
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```
+Authorization: Bearer <your-jwt-token>
 ```
 
-## Run tests
+### Default Users (Created by Seeder)
 
-```bash
-# unit tests
-$ npm run test
+**Admin User:**
+- Email: `admin@example.com`
+- Password: `admin123`
+- Role: `admin`
 
-# e2e tests
-$ npm run test:e2e
+**Regular User:**
+- Email: `user@example.com`
+- Password: `user123`
+- Role: `user`
 
-# test coverage
-$ npm run test:cov
+## Security Features
+
+### Admin-Only Operations
+- **Group Creation**: Only admin users can create new groups
+- **Group Deletion**: Only admin users can delete groups
+- **View All Groups**: Only admin users can see all groups in the system
+
+### Member-Only Access
+- **Group Viewing**: Regular users can only view groups they are members of
+- **Message Access**: Users can only send/receive messages in groups they belong to
+- **Member Visibility**: Users can only see members of groups they belong to
+
+### WebSocket Security
+- **Authentication Required**: All WebSocket connections require valid JWT tokens
+- **Member Validation**: Users can only join chat rooms for groups they are members of
+- **Message Validation**: Messages can only be sent to groups the user belongs to
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login and get JWT token
+
+### Groups (Admin-Only Management)
+- `POST /api/groups` - Create a new group (Admin only)
+- `GET /api/groups` - Get all groups (Admin only)
+- `DELETE /api/groups/:id` - Delete a group (Admin only)
+
+### Groups (Member Access)
+- `GET /api/groups/my-groups` - Get user's groups
+- `GET /api/groups/:id` - Get group details (Admin or member)
+- `GET /api/groups/:id/members` - Get group members (Admin or member)
+- `POST /api/groups/:id/join` - Join a group
+- `POST /api/groups/:id/leave` - Leave a group
+
+### Chat
+- `GET /api/chat/groups/:groupId/messages` - Get group messages (Admin or member)
+- `POST /api/chat/groups/:groupId/messages` - Send message to group (Member only)
+- `DELETE /api/chat/messages/:messageId` - Delete message (Sender only)
+
+## WebSocket Events
+
+### Client Events (Send to Server)
+- `joinGroup` - Join a group chat room (Member only)
+- `leaveGroup` - Leave a group chat room
+- `sendMessage` - Send a message to a group (Member only)
+- `typing` - Send typing indicator (Member only)
+- `getOnlineUsers` - Get online users in a group (Member only)
+
+### Server Events (Receive from Server)
+- `connected` - Connection confirmation
+- `joinedGroup` - Successfully joined a group
+- `userJoined` - Another user joined the group
+- `userLeft` - Another user left the group
+- `newMessage` - New message received
+- `userTyping` - User typing indicator
+- `onlineUsers` - List of online users
+- `error` - Error messages
+
+## Project Structure
+
+```
+src/
+├── auth/                # Authentication module
+│   ├── dto/             # Data transfer objects
+│   ├── entity/          # User entity
+│   ├── guards/          # Authentication guards
+│   └── strategies/      # JWT strategy
+├── chat/                # Chat module
+│   ├── dto/             # Message DTOs
+│   ├── entity/          # Message entity
+│   └── gateway/         # WebSocket gateway
+├── group/               # Group management module
+│   ├── dto/             # Group DTOs
+│   ├── entities/        # Group entities
+│   └── service/         # Group business logic
+├── common/              # Shared utilities
+│   ├── decorators/      # Custom decorators
+│   ├── dto/             # Common DTOs
+│   └── enum/            # Enums
+└── config/              # Configuration files
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🧪 Testing
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🔧 Development
 
-## Resources
+```bash
+# Format code
+npm run format
 
-Check out a few resources that may come in handy when working with NestJS:
+# Lint code
+npm run lint
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Build for production
+npm run build
+```
 
-## Support
+## Environment Variables
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Application port | `3000` |
+| `DATABASE_HOST` | Database host | `localhost` |
+| `DATABASE_PORT` | Database port | `3306` |
+| `DATABASE_USERNAME` | Database username | `root` |
+| `DATABASE_PASSWORD` | Database password | - |
+| `DATABASE_NAME` | Database name | `group_chat` |
+| `JWT_SECRET` | JWT secret key | - |
 
-## Stay in touch
+## Contributing
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## License
+## 📄 License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support and questions, please open an issue in the repository or contact the development team.
+
+## 🔄 Changelog
+
+### Version 1.0.0
+- Initial release with secure group chat functionality
+- Admin-only group management
+- Member-only access controls
+- Real-time WebSocket messaging
+- Comprehensive API documentation
+- JWT authentication
+- Role-based permissions

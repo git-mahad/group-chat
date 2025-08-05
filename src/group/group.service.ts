@@ -1,4 +1,3 @@
-// src/groups/groups.service.ts
 import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -55,6 +54,19 @@ export class GroupsService {
     return group;
   }
 
+  async getGroupMembers(groupId: number) {
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId },
+      relations: ['members', 'members.user'],
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    return group.members.map(member => member.user);
+  }
+
   async getUserGroups(userId: number) {
     const userGroups = await this.groupUserRepository.find({
       where: { userId },
@@ -93,10 +105,6 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    if (group.createdById === userId) {
-      throw new ForbiddenException('Group creator cannot leave the group');
-    }
-
     const membership = await this.groupUserRepository.findOne({
       where: { groupId, userId },
     });
@@ -119,8 +127,14 @@ export class GroupsService {
       throw new NotFoundException('Group not found');
     }
 
-    if (group.createdById !== userId) {
-      throw new ForbiddenException('Only group creator can delete the group');
+    // Allow admins to delete any group, or allow group creators to delete their own groups
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (group.createdById !== userId && user.role !== 'admin') {
+      throw new ForbiddenException('Only group creator or admin can delete the group');
     }
 
     await this.groupRepository.remove(group);

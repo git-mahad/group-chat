@@ -22,7 +22,6 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Group Chat API')
     .setDescription('A real-time group chat application API')

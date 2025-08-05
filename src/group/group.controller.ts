@@ -1,4 +1,3 @@
-// src/groups/groups.controller.ts
 import { 
   Controller, 
   Get, 
@@ -9,18 +8,20 @@ import {
   UseGuards, 
   ValidationPipe,
   ParseIntPipe,
-  HttpStatus 
+  HttpStatus,
+  ForbiddenException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
 import { GroupsService } from './group.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from 'src/auth/guards/admin.guard';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { GroupResponseDto } from './dto/group-response.dto';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { User } from 'src/auth/entity/user.entity';
 import { ChatGroup } from './entities/chat-group.entity';
-import { AdminGuard } from 'src/auth/guards/admin.guard';
+import { UserRole } from 'src/common/enum/user.role.enum';
 
 @ApiTags('groups')
 @ApiBearerAuth()
@@ -31,7 +32,7 @@ export class GroupsController {
 
   @Post()
   @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Create a new group' })
+  @ApiOperation({ summary: 'Create a new group (Admin only)' })
   @ApiBody({ type: CreateGroupDto })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -48,6 +49,11 @@ export class GroupsController {
     description: 'Unauthorized - JWT token required',
     type: ErrorResponseDto,
   })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Admin access required',
+    type: ErrorResponseDto,
+  })
   async createGroup(
     @Body(ValidationPipe) createGroupDto: CreateGroupDto,
     @CurrentUser() user: User,
@@ -56,7 +62,8 @@ export class GroupsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all groups' })
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Get all groups (Admin only)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of all groups',
@@ -65,6 +72,11 @@ export class GroupsController {
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized - JWT token required',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Admin access required',
     type: ErrorResponseDto,
   })
   async getAllGroups() {
@@ -88,7 +100,7 @@ export class GroupsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get group by ID' })
+  @ApiOperation({ summary: 'Get group by ID (Admin only or group member)' })
   @ApiParam({ name: 'id', description: 'Group ID', type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -105,8 +117,65 @@ export class GroupsController {
     description: 'Unauthorized - JWT token required',
     type: ErrorResponseDto,
   })
-  async getGroupById(@Param('id', ParseIntPipe) id: number) {
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access denied - Admin or group member required',
+    type: ErrorResponseDto,
+  })
+  async getGroupById(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
+    
+    if (user.role === UserRole.ADMIN) {
+      return this.groupsService.getGroupById(id);
+    }
+    
+    const isMember = await this.groupsService.isUserMemberOfGroup(id, user.id);
+    if (!isMember) {
+      throw new ForbiddenException('You can only view groups you are a member of');
+    }
+    
     return this.groupsService.getGroupById(id);
+  }
+
+  @Get(':id/members')
+  @ApiOperation({ summary: 'Get group members (Admin only or group member)' })
+  @ApiParam({ name: 'id', description: 'Group ID', type: Number })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of group members',
+    type: [User],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Group not found',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized - JWT token required',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access denied - Admin or group member required',
+    type: ErrorResponseDto,
+  })
+  async getGroupMembers(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: User,
+  ) {
+    if (user.role === UserRole.ADMIN) {
+      return this.groupsService.getGroupMembers(id);
+    }
+    
+    const isMember = await this.groupsService.isUserMemberOfGroup(id, user.id);
+    if (!isMember) {
+      throw new ForbiddenException('You can only view members of groups you belong to');
+    }
+    
+    return this.groupsService.getGroupMembers(id);
   }
 
   @Post(':id/join')
@@ -171,7 +240,7 @@ export class GroupsController {
 
   @Delete(':id')
   @UseGuards(AdminGuard)
-  @ApiOperation({ summary: 'Delete a group (only group creator can delete)' })
+  @ApiOperation({ summary: 'Delete a group (Admin only)' })
   @ApiParam({ name: 'id', description: 'Group ID', type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -185,7 +254,7 @@ export class GroupsController {
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
-    description: 'Only group creator can delete the group',
+    description: 'Admin access required',
     type: ErrorResponseDto,
   })
   @ApiResponse({
